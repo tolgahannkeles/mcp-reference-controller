@@ -2,6 +2,8 @@
 
 from dataclasses import replace
 
+import pytest
+
 from refcheck.models import Reference, Status
 from refcheck.parsing import parse_input, parse_plain
 from refcheck.verify import assess, merge
@@ -82,9 +84,30 @@ def test_fabricated_title_reusing_keywords_gets_suggestion(resnet):
 
 
 def test_book_not_found_is_unverifiable():
-    # Turkish-language book, a typical example of a source missing from the indexes.
+    # A non-English book: a typical example of a source missing from the indexes.
     ref = parse_input("@book{k, title={Yapay Zeka ve Toplum Üzerine Denemeler}, author={Aydın, Mehmet}, year={2019}}")[0]
     assert assess(ref, []).status == Status.UNVERIFIABLE
+
+
+@pytest.mark.parametrize("raw", [
+    "Müller, K. (2018). Neuronale Netze in der Praxis. Dissertation, TU München.",
+    "Dupont, M. (2015). Apprentissage profond pour la vision. Thèse de doctorat, Université de Lyon.",
+    "García, L. (2019). Redes neuronales aplicadas. Tesis doctoral, Universidad de Granada.",
+    "Yılmaz, A. (2020). Derin öğrenme ile görüntü sınıflandırma. Doktora tezi, Ankara Üniversitesi.",
+    "王伟 (2017). 深度学习方法研究. 博士学位论文, 清华大学.",
+    "Smith, J. (2021). Benchmark results. Retrieved from https://example.org/benchmarks",
+])
+def test_unindexed_markers_in_several_languages(raw):
+    assert assess(parse_plain(raw), []).status == Status.UNVERIFIABLE
+
+
+@pytest.mark.parametrize("raw", [
+    # Surnames/words containing a marker must not trigger it.
+    "Martez, P. (2019). Graph kernels for molecules. Journal of Chemical Physics, 150, 1-9.",
+    "Lee, D. (2020). These results generalize: a study of transfer. NeurIPS.",
+])
+def test_unindexed_markers_need_whole_words(raw):
+    assert assess(parse_plain(raw), []).status == Status.NOT_FOUND
 
 
 def test_retracted_work_is_flagged(deep_learning):

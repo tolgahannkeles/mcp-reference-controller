@@ -192,14 +192,16 @@ Code layout (`src/refcheck/`):
 - `parsing.py`: parses BibTeX and plain-text reference lists
 - `sources.py`: Crossref, OpenAlex and doi.org clients
 - `verify.py`: matching and decision logic (`assess()` is a pure function, easy to test)
-- `normalize.py`: text normalization (Turkish characters, LaTeX) and similarity measures
+- `normalize.py`: text normalization (diacritics and special letters in any Latin-script language, LaTeX) and similarity measures
 - `bibtex.py`: BibTeX generation from verified records
 - `server.py`: MCP tools
 
 ## Limitations and roadmap
 
-- Books, theses and local Turkish journals may be missing from the indexes
-  (`unverifiable`). **DergiPark** and **TR Dizin** support is next.
+- Books, theses and regional or non-English journals may be missing from the
+  indexes; theses and web sources are reported as `unverifiable`. Regional
+  indexes are good candidates for new sources, e.g. SciELO, J-STAGE, CNKI,
+  DergiPark and other national journal platforms. Contributions welcome.
 - More sources per field: arXiv, DBLP, PubMed, Semantic Scholar.
 - Extracting reference lists from PDF and Word drafts (GROBID).
 - Author plausibility (do the authors exist and publish in this area?).

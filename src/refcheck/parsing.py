@@ -140,8 +140,25 @@ def is_often_unindexed(ref: Reference) -> bool:
         return False
     if ref.entry_type in _UNINDEXED_TYPES:
         return True
-    # Includes Turkish markers: "tez" (thesis), "erişim" (accessed).
-    return any(
-        w in raw
-        for w in ("thesis", "dissertation", "tez", "retrieved from", "erişim", "accessed", "http://", "https://www.")
-    ) and not ref.doi
+    return bool(_UNINDEXED_MARKERS.search(raw))
+
+
+# Words that mark theses and web sources in citations, in several languages,
+# since reference lists are often written in the manuscript's language.
+_UNINDEXED_WORDS = [
+    # thesis / dissertation
+    # ("these", German for thesis, is left out: it is a common English word.)
+    "thesis", "dissertation", "thèse", "doktorarbeit", "masterarbeit",
+    "tesis", "tese", "tesi", "tez", "tezi", "proefschrift", "avhandling", "rozprawa",
+    "väitöskirja", "диссертация", "диссертации", "praca doktorska",
+    # retrieved / accessed (web sources)
+    "retrieved from", "accessed", "abgerufen", "zugegriffen", "consulté", "consultado",
+    "accedido", "acesso em", "consultato", "erişim", "geraadpleegd", "dostęp",
+]
+# CJK words have no spaces around them, so they are matched without word boundaries.
+_UNINDEXED_CJK = ["学位论文", "博士论文", "硕士论文", "博士論文", "修士論文", "학위논문"]
+_UNINDEXED_MARKERS = re.compile(
+    r"(?<!\w)(?:" + "|".join(re.escape(w) for w in _UNINDEXED_WORDS) + r")(?!\w)"
+    r"|" + "|".join(_UNINDEXED_CJK) +
+    r"|https?://(?!(?:dx\.)?doi\.org)"
+)
