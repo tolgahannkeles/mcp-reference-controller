@@ -82,6 +82,7 @@ def test_fabricated_title_reusing_keywords_gets_suggestion(resnet):
 
 
 def test_book_not_found_is_unverifiable():
+    # Turkish-language book, a typical example of a source missing from the indexes.
     ref = parse_input("@book{k, title={Yapay Zeka ve Toplum Üzerine Denemeler}, author={Aydın, Mehmet}, year={2019}}")[0]
     assert assess(ref, []).status == Status.UNVERIFIABLE
 

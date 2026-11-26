@@ -3,7 +3,7 @@ from refcheck.parsing import parse_input, parse_plain, split_plain
 
 
 def test_normalize_handles_turkish_and_latex():
-    assert normalize("Keleş, Işık & Gülçin") == "keles isik gulcin"
+    assert normalize("Şahin, Işık & Gülçin") == "sahin isik gulcin"
     assert normalize(r"G{\"o}del's {T}heorem") == "godel s theorem"
 
 

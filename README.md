@@ -1,35 +1,35 @@
-# refcheck: Referans Kontrol MCP Sunucusu
+# refcheck: Reference Checker MCP Server
 
-Yapay zekâ yardımıyla yazılan makalelerde **uydurma (halüsinasyon) veya hatalı
-künyeli referansları** gönderimden önce yakalamak için bir MCP sunucusu.
-Referansları Crossref ve OpenAlex'te arar; gerçek kaydı bulursa alan alan
-karşılaştırır ve düzeltilmiş BibTeX'i verir.
+An MCP server that helps authors catch **fabricated (hallucinated) or mis-cited
+references** before submission, especially when writing with AI assistance.
+It looks each reference up in Crossref and OpenAlex, compares the cited details
+field by field with the real record, and returns a corrected BibTeX entry.
 
-## Araçlar
+## Tools
 
-| Araç | Ne yapar |
+| Tool | What it does |
 |---|---|
-| `check_references` | Bir referans listesinin tamamını kontrol eder (BibTeX veya APA/IEEE gibi düz metin) |
-| `verify_reference` | Tek bir referansı kontrol eder |
-| `search_literature` | Bir konu veya iddia için **gerçek** makaleleri, BibTeX'leriyle birlikte bulur |
-| `get_bibtex` | Bir DOI için doğru BibTeX üretir |
+| `check_references` | Checks a whole reference list (BibTeX, or plain text in APA, IEEE, ...) |
+| `verify_reference` | Checks a single reference |
+| `search_literature` | Finds **real** papers for a topic or claim, with ready BibTeX |
+| `get_bibtex` | Builds a correct BibTeX entry for a DOI |
 
-### Sonuç durumları
+### Result statuses
 
-| Durum | Anlamı |
+| Status | Meaning |
 |---|---|
-| `verified` | Gerçek kayıt bulundu, bilgiler tutarlı (küçük notlar olabilir) |
-| `needs_correction` | Eser var ama künyede hata var (yıl, yazar, DOI, geri çekilmiş...). Düzeltilmiş BibTeX verilir |
-| `possible_match` | Benzer bir eser var ama emin olunamadı. Yazar kontrol etmeli |
-| `not_found` | Hiçbir kaynakta yok, **muhtemelen uydurma**. Varsa yakın adaylar `did_you_mean` altında listelenir |
-| `unverifiable` | Kitap, tez, rapor, web sayfası gibi indekslerde çoğu zaman bulunmayan bir kaynak. Elle kontrol edilmeli |
-| `error` | Kaynaklara ulaşılamadı |
+| `verified` | A real record matches and the cited details agree (minor notes possible) |
+| `needs_correction` | The work exists but the citation has errors (year, authors, DOI, retracted...). A corrected BibTeX is included |
+| `possible_match` | A similar work exists but the match is uncertain. The author should check |
+| `not_found` | No source has it: **likely fabricated**. Close candidates, if any, are listed under `did_you_mean` |
+| `unverifiable` | A source type often missing from indexes (book, thesis, report, web page). Check manually |
+| `error` | The sources could not be reached |
 
-Yakalanan uydurma tipleri: tamamen uydurma eser, gerçek başlık ama uydurma yazarlar,
-var olmayan DOI, başka bir makaleye ait DOI, yanlış yıl/cilt/sayfa, geri çekilmiş
-(retracted) makale, gerçek başlığa eklenmiş uydurma alt başlık.
+Detected problems: fully fabricated works, real titles with fabricated authors,
+non-existent DOIs, DOIs belonging to another paper, wrong year/volume/pages,
+retracted papers, and fabricated subtitles added to real titles.
 
-## Kurulum
+## Installation
 
 ```powershell
 git clone <repo-url> refcheck
@@ -38,64 +38,70 @@ python -m venv .venv
 .\.venv\Scripts\pip install -e .
 ```
 
-### Claude Desktop
+### Claude Code (CLI or VS Code extension)
 
-`%APPDATA%\Claude\claude_desktop_config.json` dosyasına ekleyin (yolu kendi
-kurulumunuza göre değiştirin):
+Per project: create `.mcp.json` in the root of the folder you write in
+(adjust the path to your installation):
 
 ```json
 {
   "mcpServers": {
     "refcheck": {
-      "command": "C:\\yol\\refcheck\\.venv\\Scripts\\refcheck-mcp.exe",
-      "env": { "REFCHECK_MAILTO": "lab-iletisim@ornek.edu.tr" }
+      "command": "C:\\path\\to\\refcheck\\.venv\\Scripts\\refcheck-mcp.exe",
+      "env": { "REFCHECK_MAILTO": "lab-contact@example.edu" }
     }
   }
 }
 ```
 
-### Claude Code
+For all projects:
 
 ```powershell
-claude mcp add refcheck -e REFCHECK_MAILTO=lab-iletisim@ornek.edu.tr -- C:\yol\refcheck\.venv\Scripts\refcheck-mcp.exe
+claude mcp add --scope user refcheck -e REFCHECK_MAILTO=lab-contact@example.edu -- C:\path\to\refcheck\.venv\Scripts\refcheck-mcp.exe
 ```
 
-Ardından Claude'a örneğin şunu söyleyebilirsiniz: *"Şu referans listesini kontrol et: ..."*
-ya da *"Bu paragraf için gerçek kaynak bul."*
+Start a new session and run `/mcp` to confirm `refcheck` is connected.
 
-## Ayarlar (ortam değişkenleri)
+### Claude Desktop
 
-| Değişken | Açıklama |
+Add the same `mcpServers` block to `%APPDATA%\Claude\claude_desktop_config.json`.
+
+Then ask, for example: *"Check this reference list: ..."* or
+*"Find real sources for this paragraph."*
+
+## Configuration (environment variables)
+
+| Variable | Description |
 |---|---|
-| `REFCHECK_MAILTO` | Crossref/OpenAlex'e gönderilen iletişim e-postası. "Polite pool"a girer; daha hızlı ve güvenilir. **Önerilir.** |
-| `REFCHECK_OPENALEX_API_KEY` | (İsteğe bağlı) OpenAlex API anahtarı, yoğun kullanım için |
-| `REFCHECK_CACHE` | Önbellek dosyasının yolu (varsayılan `%LOCALAPPDATA%\refcheck\cache.sqlite3`); `off` yazılırsa kapanır |
+| `REFCHECK_MAILTO` | Contact e-mail sent to Crossref/OpenAlex. Puts requests in the "polite pool", which is faster and more reliable. **Recommended.** |
+| `REFCHECK_OPENALEX_API_KEY` | (Optional) OpenAlex API key for heavy use |
+| `REFCHECK_CACHE` | Cache file path (default `%LOCALAPPDATA%\refcheck\cache.sqlite3`); set to `off` to disable |
 
-Sorgular 30 gün önbellekte tutulur; aynı referansı tekrar kontrol etmek API'ye gitmez.
+Responses are cached for 30 days, so re-checking the same reference does not hit the APIs.
 
-## Geliştirme
+## Development
 
 ```powershell
 .\.venv\Scripts\pip install -e ".[dev]"
-.\.venv\Scripts\python -m pytest              # çevrimdışı testler
-.\.venv\Scripts\python -m pytest -m live      # gerçek API'lerle uçtan uca testler
+.\.venv\Scripts\python -m pytest              # offline tests
+.\.venv\Scripts\python -m pytest -m live      # end-to-end tests against the real APIs
 ```
 
-Kod yapısı (`src/refcheck/`):
+Code layout (`src/refcheck/`):
 
-- `parsing.py`: BibTeX ve düz metin referans listelerini ayrıştırır
-- `sources.py`: Crossref, OpenAlex ve doi.org istemcileri
-- `verify.py`: Eşleştirme ve karar mantığı (`assess()` saf fonksiyon, kolay test edilir)
-- `normalize.py`: Metin normalizasyonu (Türkçe karakterler, LaTeX) ve benzerlik ölçüleri
-- `bibtex.py`: Doğrulanmış kayıttan BibTeX üretimi
-- `server.py`: MCP araçları
+- `parsing.py`: parses BibTeX and plain-text reference lists
+- `sources.py`: Crossref, OpenAlex and doi.org clients
+- `verify.py`: matching and decision logic (`assess()` is a pure function, easy to test)
+- `normalize.py`: text normalization (Turkish characters, LaTeX) and similarity measures
+- `bibtex.py`: BibTeX generation from verified records
+- `server.py`: MCP tools
 
-## Sınırlamalar ve yol haritası
+## Limitations and roadmap
 
-- Kitaplar, tezler ve Türkçe yerel dergiler indekslerde eksik olabilir (`unverifiable`).
-  Sırada **DergiPark** ve **TR Dizin** desteği var.
-- Alana göre ek kaynaklar eklenebilir: arXiv, DBLP, PubMed, Semantic Scholar.
-- PDF ve Word taslaklarından referans listesini otomatik çıkarma (GROBID).
-- Yazar–konu tutarlılığı (yazarlar gerçek mi, bu alanda yayınları var mı?).
-- Atıfın, alıntılanan cümledeki iddiayı gerçekten destekleyip desteklemediği.
-- Labın kullandığı atıf stillerinde (APA, IEEE...) format kontrolü.
+- Books, theses and local Turkish journals may be missing from the indexes
+  (`unverifiable`). **DergiPark** and **TR Dizin** support is next.
+- More sources per field: arXiv, DBLP, PubMed, Semantic Scholar.
+- Extracting reference lists from PDF and Word drafts (GROBID).
+- Author plausibility (do the authors exist and publish in this area?).
+- Whether a cited work actually supports the claim it is cited for.
+- Citation style checking (APA, IEEE, ...).

@@ -140,6 +140,7 @@ def is_often_unindexed(ref: Reference) -> bool:
         return False
     if ref.entry_type in _UNINDEXED_TYPES:
         return True
+    # Includes Turkish markers: "tez" (thesis), "erişim" (accessed).
     return any(
         w in raw
         for w in ("thesis", "dissertation", "tez", "retrieved from", "erişim", "accessed", "http://", "https://www.")
