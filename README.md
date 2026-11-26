@@ -38,10 +38,28 @@ python -m venv .venv
 .\.venv\Scripts\pip install -e .
 ```
 
-### Claude Code (CLI or VS Code extension)
+On macOS/Linux use `python3 -m venv .venv` and `.venv/bin/pip install -e .`.
 
-Per project: create `.mcp.json` in the root of the folder you write in
-(adjust the path to your installation):
+## Connecting to an AI client
+
+refcheck is a standard **stdio** MCP server, so it works with any MCP-capable
+client. Every client needs the same two things:
+
+- **command**: the server executable
+  - Windows: `C:\path\to\refcheck\.venv\Scripts\refcheck-mcp.exe`
+  - macOS/Linux: `/path/to/refcheck/.venv/bin/refcheck-mcp`
+- **env** (optional): `REFCHECK_MAILTO=lab-contact@example.edu`
+
+Only the config file location and format differ. In JSON on Windows, write
+backslashes in paths as `\\`. After changing a config, restart the client (or
+reload the window) and approve the server when asked.
+
+Once connected, ask for example: *"Check this reference list: ..."* or
+*"Find real sources for this paragraph."*
+
+### Claude Code (CLI and VS Code / JetBrains extensions)
+
+Per project, create `.mcp.json` in the root of the folder you write in:
 
 ```json
 {
@@ -54,20 +72,102 @@ Per project: create `.mcp.json` in the root of the folder you write in
 }
 ```
 
-For all projects:
+Or for all projects:
 
 ```powershell
 claude mcp add --scope user refcheck -e REFCHECK_MAILTO=lab-contact@example.edu -- C:\path\to\refcheck\.venv\Scripts\refcheck-mcp.exe
 ```
 
-Start a new session and run `/mcp` to confirm `refcheck` is connected.
+Run `/mcp` in a new session to confirm that `refcheck` is connected.
 
 ### Claude Desktop
 
-Add the same `mcpServers` block to `%APPDATA%\Claude\claude_desktop_config.json`.
+Add the same `mcpServers` block to `claude_desktop_config.json`
+(Windows: `%APPDATA%\Claude\`, macOS: `~/Library/Application Support/Claude/`).
 
-Then ask, for example: *"Check this reference list: ..."* or
-*"Find real sources for this paragraph."*
+### VS Code with GitHub Copilot (agent mode)
+
+Create `.vscode/mcp.json` in the workspace (or run **MCP: Add Server** from the
+command palette to add it to your user settings). Note the top-level key is
+`servers` and the `type` field:
+
+```json
+{
+  "servers": {
+    "refcheck": {
+      "type": "stdio",
+      "command": "C:\\path\\to\\refcheck\\.venv\\Scripts\\refcheck-mcp.exe",
+      "env": { "REFCHECK_MAILTO": "lab-contact@example.edu" }
+    }
+  }
+}
+```
+
+Open Copilot Chat in **Agent** mode; the refcheck tools appear under the tools icon.
+
+### Cursor
+
+`.cursor/mcp.json` in the project, or `~/.cursor/mcp.json` for all projects.
+Same `mcpServers` block as Claude Code above. Check **Settings → MCP** for a
+green status.
+
+### Windsurf
+
+`~/.codeium/windsurf/mcp_config.json` (or **Settings → Cascade → MCP Servers →
+View raw config**). Same `mcpServers` block.
+
+### Cline (VS Code extension)
+
+Open the **MCP Servers** panel in Cline → **Configure MCP Servers**, and add the
+same `mcpServers` block to `cline_mcp_settings.json`.
+
+### Continue (VS Code / JetBrains extension)
+
+Create `.continue/mcpServers/refcheck.yaml` in the workspace:
+
+```yaml
+name: refcheck
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: refcheck
+    command: C:\path\to\refcheck\.venv\Scripts\refcheck-mcp.exe
+    env:
+      REFCHECK_MAILTO: lab-contact@example.edu
+```
+
+MCP tools are available in Continue's **Agent** mode.
+
+### Gemini CLI
+
+Add the same `mcpServers` block to `~/.gemini/settings.json` (or
+`.gemini/settings.json` in the project).
+
+### OpenAI Codex CLI
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.refcheck]
+command = 'C:\path\to\refcheck\.venv\Scripts\refcheck-mcp.exe'
+env = { REFCHECK_MAILTO = "lab-contact@example.edu" }
+```
+
+### Other clients
+
+Any client that supports stdio MCP servers works: point it at the executable
+above. Config locations change between client versions; if a path here is out
+of date, check the client's MCP documentation.
+
+### Troubleshooting
+
+- **Server does not start:** run the executable directly in a terminal. It should
+  wait silently for input (stop it with Ctrl+C). An error here means the
+  installation is broken; rerun `pip install -e .`.
+- **Tools do not appear:** make sure the client is in agent/tool mode and was
+  restarted after the config change.
+- **Timeouts or `error` results:** the machine needs internet access to
+  `api.crossref.org`, `api.openalex.org` and `doi.org`.
 
 ## Configuration (environment variables)
 
