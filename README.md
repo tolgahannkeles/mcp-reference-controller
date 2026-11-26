@@ -251,3 +251,7 @@ Code layout (`src/refcheck/`):
 - Author plausibility (do the authors exist and publish in this area?).
 - Whether a cited work actually supports the claim it is cited for.
 - Citation style checking (APA, IEEE, ...).
+
+## License
+
+[MIT](LICENSE)
