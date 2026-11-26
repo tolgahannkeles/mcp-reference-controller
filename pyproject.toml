@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "refcheck"
+version = "0.1.0"
+description = "MCP server that checks whether references in a manuscript really exist and are cited correctly."
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=2.3,<3",
+    "httpx>=0.28",
+    "rapidfuzz>=3.9",
+    "bibtexparser>=2.0.0b7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "respx>=0.21"]
+
+[project.scripts]
+refcheck-mcp = "refcheck.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = ["live: hits the real Crossref/OpenAlex APIs (run with -m live)"]
+addopts = "-m 'not live'"
