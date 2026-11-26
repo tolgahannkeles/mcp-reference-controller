@@ -29,6 +29,50 @@ Detected problems: fully fabricated works, real titles with fabricated authors,
 non-existent DOIs, DOIs belonging to another paper, wrong year/volume/pages,
 retracted papers, and fabricated subtitles added to real titles.
 
+## How references are verified
+
+### Data sources
+
+All sources are free, public scholarly APIs; no account is needed.
+
+| Source | Used for |
+|---|---|
+| [Crossref](https://www.crossref.org/) | DOI lookup and bibliographic search. Publisher-deposited metadata (title, authors, venue, volume, pages) is treated as authoritative when sources disagree. |
+| [OpenAlex](https://openalex.org/) | Second, broader index: also covers preprints (arXiv), conference papers and works without a Crossref DOI. Provides the retraction flag and citation counts, and powers `search_literature`. |
+| [doi.org](https://www.doi.org/) handle API | Checks whether a DOI is registered at all, with any registration agency (e.g. DataCite for Zenodo), when Crossref and OpenAlex do not know it. |
+
+### Process
+
+1. **DOI check.** If the reference has a DOI, it is looked up in Crossref, then
+   OpenAlex. If neither knows it, doi.org says whether the DOI exists at all.
+2. **Search.** Unless the DOI already gave a clear match, Crossref is searched
+   with the full citation and OpenAlex with the title.
+3. **Merge.** Records from both sources are deduplicated by DOI.
+4. **Match.** Titles are compared strictly, so a fabricated title that reuses
+   real keywords does not match. A similarity of 90+ counts as the same work,
+   75–90 as a possible match. When several records share a title (preprint and
+   published versions, re-deposits, unrelated namesakes), the one most
+   consistent with the citation wins: matching venue first, then fewest
+   conflicting fields, then most citations. A similar title with none of the
+   cited authors counts as a different paper.
+5. **Compare fields.** Authors, year, DOI, venue, volume and pages are checked
+   against the matched record, and each difference is reported with the correct
+   value.
+
+### What is sent where
+
+Only the reference itself (the citation text or its title) and DOIs are sent to
+these APIs. No manuscript text leaves your machine. Responses are cached locally
+for 30 days (see `REFCHECK_CACHE`).
+
+### Coverage
+
+A work missing from both Crossref and OpenAlex is reported as `not_found`, so
+sources those indexes miss (some books, theses, regional journals, grey
+literature) can be false alarms. Theses and web pages are detected and reported
+as `unverifiable` instead; for anything else marked `not_found`, the author
+should still take a quick look before deleting it.
+
 ## Installation
 
 ```powershell
